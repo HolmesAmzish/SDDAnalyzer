@@ -3,95 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数据展示</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- 引入 Chart.js -->
+    <title>数据展示 Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            height: 100vh;
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #343a40;
             padding-top: 20px;
+        }
+        .sidebar a {
+            padding: 10px 20px;
+            text-decoration: none;
+            font-size: 18px;
+            color: white;
+            display: block;
+            transition: 0.3s;
+        }
+        .sidebar a:hover {
+            background-color: #495057;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
         }
         .card {
             border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        .card-header {
-            background-color: #007bff;
-            color: white;
-            font-size: 1.2rem;
-        }
-        .card-body {
-            background-color: #fff;
-            padding: 20px;
-        }
-        .btn-refresh {
-            margin: 20px auto;
-            display: block;
-            font-size: 16px;
-            padding: 12px 30px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            transition: background-color 0.3s;
-        }
-        .btn-refresh:hover {
-            background-color: #218838;
-        }
-        .data-item {
-            padding: 15px;
-            border-bottom: 1px solid #ddd;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-        .data-item img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin-top: 10px;
-            border-radius: 8px;
-        }
-        .data-item strong {
-            color: #333;
-        }
-        .container-fluid {
-            max-width: 1200px;
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle;
         }
         #chart-container {
-            margin-top: 30px;
+            height: 300px;
         }
     </style>
 </head>
 <body>
 
-<div class="container-fluid">
-    <h1 class="text-center mb-4">数据展示面板</h1>
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <h4 class="text-center text-white">SDD Dashboard</h4>
+    <a href="#">📊 数据展示</a>
+    <a href="#">📈 统计分析</a>
+    <a href="#">⚙️ 设置</a>
+</div>
 
-    <button class="btn-refresh" onclick="fetchData()">刷新数据</button>
+<!-- 主体内容 -->
+<div class="main-content">
+    <h2 class="text-center mb-4">缺陷检测数据</h2>
 
-    <div class="row">
-        <!-- 数据列表部分 -->
-        <div class="col-lg-8">
-            <div id="data-container" class="card">
-                <div class="card-header">
-                    数据列表
-                </div>
-                <div class="card-body">
-                    <!-- 数据项会被动态插入在这里 -->
-                </div>
-            </div>
+    <button class="btn btn-success mb-3" onclick="fetchData()">🔄 刷新数据</button>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <strong>数据概览</strong>
         </div>
-
-        <!-- 图表展示部分 -->
-        <div class="col-lg-4">
-            <div id="chart-container" class="card">
-                <div class="card-header">
-                    数据占比图
+        <div class="card-body">
+            <div class="row">
+                <!-- 数据表格 -->
+                <div class="col-lg-8">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>名称</th>
+                            <th>日期</th>
+                            <th>时间</th>
+                            <th>标签</th>
+                            <th>评分</th>
+                        </tr>
+                        </thead>
+                        <tbody id="data-table">
+                        <!-- 数据动态插入 -->
+                        </tbody>
+                    </table>
                 </div>
-                <div class="card-body">
-                    <canvas id="labelChart"></canvas>
+                <!-- 图表 -->
+                <div class="col-lg-4">
+                    <div id="chart-container">
+                        <canvas id="labelChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -99,7 +101,7 @@
 </div>
 
 <script>
-    let chartInstance = null; // 用于存储图表实例，防止重复创建
+    let chartInstance = null;
 
     function parseLabel(labelStr) {
         try {
@@ -112,24 +114,18 @@
     }
 
     async function fetchData() {
-        const container = document.getElementById('data-container').querySelector('.card-body');
-        container.innerHTML = '<div class="text-center">加载中...</div>';
+        const tableBody = document.getElementById('data-table');
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">加载中...</td></tr>';
 
         try {
             const response = await fetch('/api/data/getAll');
             if (!response.ok) throw new Error('数据获取失败');
             const data = await response.json();
-            container.innerHTML = '';
+            tableBody.innerHTML = '';
 
-            // 统计 Label 数据占比
             let labelCounts = {"夹杂物": 0, "补丁": 0, "划痕": 0, "其他": 0};
 
             data.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'data-item';
-
-                let imgTag = item.resFig ? `<img src="data:image/png;base64,${item.resFig}" alt="图像">` : '';
-
                 let detectedLabels = parseLabel(item.label);
                 detectedLabels.forEach(label => {
                     if (labelCounts.hasOwnProperty(label)) {
@@ -137,35 +133,32 @@
                     }
                 });
 
-                div.innerHTML = `
-                    <strong>ID:</strong> ${item.figId} <br>
-                    <strong>Name:</strong> ${item.name} <br>
-                    <strong>Date:</strong> ${item.date} <br>
-                    <strong>Time:</strong> ${item.time} <br>
-                    <strong>Label:</strong> ${detectedLabels.join(', ')} <br>
-                    <strong>Num:</strong> ${item.num} <br>
-                    <strong>Dice:</strong> ${item.dice} <br>
-                    ${imgTag}
-                `;
-                container.appendChild(div);
+                let row = `<tr>
+                    <td>${item.figId}</td>
+                    <td>${item.name}</td>
+                    <td>${item.date}</td>
+                    <td>${item.time}</td>
+                    <td>${detectedLabels.join(', ')}</td>
+                    <td>${item.dice}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
             });
 
             updateChart(labelCounts);
         } catch (error) {
-            container.innerHTML = `<p class="text-danger">错误: ${error.message}</p>`;
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">错误: ${error.message}</td></tr>`;
         }
     }
 
     function updateChart(labelCounts) {
         const ctx = document.getElementById('labelChart').getContext('2d');
 
-        // 清除旧图表
         if (chartInstance) {
             chartInstance.destroy();
         }
 
         chartInstance = new Chart(ctx, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
                 labels: Object.keys(labelCounts),
                 datasets: [{
