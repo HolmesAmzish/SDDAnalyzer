@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据展示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #data-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .data-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .data-item:last-child {
+            border-bottom: none;
+        }
+        .data-item img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>数据列表</h1>
+<button onclick="fetchData()">刷新数据</button>
+<div id="data-container"></div>
+
+<script>
+    function parseLabel(labelStr) {
+        try {
+            const defectDict = ["夹杂物", "补丁", "划痕", "其他"];
+
+            // 解析成布尔数组，适应空格不一致的情况
+            const boolArray = labelStr
+                .replace(/\[|\]/g, '')  // 去掉方括号
+                .trim()                 // 去掉两侧空格
+                .split(/\s+/)            // 以 1 个或多个空格分割
+                .map(v => v.toLowerCase() === 'true'); // 统一转换为小写后判断
+
+            // 过滤并映射
+            const detectedDefects = boolArray
+                .map((val, index) => val ? defectDict[index] : null)
+                .filter(v => v !== null);
+
+            return detectedDefects.length > 0 ? detectedDefects.join(', ') : '无缺陷';
+        } catch (e) {
+            return '解析错误';
+        }
+    }
+
+
+    async function fetchData() {
+        const container = document.getElementById('data-container');
+        container.innerHTML = '加载中...';
+        try {
+            const response = await fetch('/api/data/getAll');
+            if (!response.ok) throw new Error('数据获取失败');
+            const data = await response.json();
+            container.innerHTML = '';
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'data-item';
+
+                let imgTag = '';
+                if (item.resFig) {
+                    const imgSrc = `data:image/png;base64,${item.resFig}`;
+                    imgTag = `<img src="${imgSrc}" alt="图像">`;
+                }
+
+                div.innerHTML = `
+                        <strong>ID:</strong> ${item.figId} <br>
+                        <strong>Name:</strong> ${item.name} <br>
+                        <strong>Date:</strong> ${item.date} <br>
+                        <strong>Time:</strong> ${item.time} <br>
+                        <strong>Label:</strong> ${parseLabel(item.label)} <br>
+                        <strong>Num:</strong> ${item.num} <br>
+                        <strong>Dice:</strong> ${item.dice} <br>
+                        ${imgTag}
+                    `;
+                container.appendChild(div);
+            });
+        } catch (error) {
+            container.innerHTML = `<p style='color:red;'>错误: ${error.message}</p>`;
+        }
+    }
+
+    fetchData();
+</script>
+</body>
+</html>
