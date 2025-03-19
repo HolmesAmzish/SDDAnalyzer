@@ -12,7 +12,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .hero-section {
-            background: url('background.png') center/cover no-repeat;
+            background: url('img/background.png') center/cover no-repeat;
             color: white;
             height: 100vh;
             display: flex;
@@ -25,7 +25,7 @@
 
         .footer {
             position: absolute;
-            bottom: 8px; /* 设置底部距离，可以根据需要调整 */
+            bottom: 8px;
             width: 100%;
             text-align: center;
             padding: 10px 0;
@@ -81,15 +81,17 @@
 
 <section class="hero-section">
     <div>
+        <img class="m-5" alt="SDD-Logo" src="img/sdd-logo-white.png" width=25%>
+
         <h1>欢迎来到SDD分析平台</h1>
         <p>一个智能化的缺陷检测分析系统</p>
-        <!-- 触发登录模态框的按钮 -->
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal">登录访问</button>
     </div>
     <p class="footer">&copy; 2025 SDD分析平台. All Rights Reserved.</p>
 </section>
 
 
+<!-- Login modal -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -116,7 +118,6 @@
 
 
 <script>
-    // 登录表单提交事件
     document.getElementById('loginForm').addEventListener('submit', async function(event) {
         event.preventDefault();
         const username = document.getElementById('username').value;
@@ -128,7 +129,7 @@
 
             if (user && user.username === username) {
                 alert('登录成功！');
-                window.location.href = "statics.html"; // 跳转到数据查询界面
+                window.location.href = "statics.html";
             } else {
                 alert('用户名错误！');
             }

@@ -39,69 +39,86 @@
         .card {
             border-radius: 12px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
         .table th, .table td {
             text-align: center;
             vertical-align: middle;
+            white-space: nowrap;
         }
-        #chart-container {
+        .chart-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .chart-container {
+            flex: 1;
             height: 300px;
+            max-width: 30%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
         }
     </style>
 </head>
 <body>
 
-<!-- 侧边栏 -->
 <div class="sidebar">
     <h4 class="text-center text-white">SDD Dashboard</h4>
-    <a href="#">📊 数据展示</a>
-    <a href="#">📈 统计分析</a>
+    <a href="#"> 数据展示</a>
+    <a href="statics.html"> 统计分析</a>
+    <a href="ai-analysis.html"> AI 分析</a>
     <a href="#">⚙️ 设置</a>
 </div>
 
-<!-- 主体内容 -->
 <div class="main-content">
     <h2 class="text-center mb-4">缺陷检测数据</h2>
 
-    <button class="btn btn-success mb-3" onclick="fetchData()">🔄 刷新数据</button>
+    <button class="btn btn-success mb-3" onclick="fetchData()"> 刷新数据</button>
 
     <div class="card">
-        <div class="card-header bg-primary text-white">
-            <strong>数据概览</strong>
-        </div>
         <div class="card-body">
-            <div class="row">
-                <!-- 数据表格 -->
-                <div class="col-lg-8">
-                    <table class="table table-bordered table-hover">
-                        <thead class="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>名称</th>
-                            <th>日期</th>
-                            <th>时间</th>
-                            <th>标签</th>
-                            <th>评分</th>
-                        </tr>
-                        </thead>
-                        <tbody id="data-table">
-                        <!-- 数据动态插入 -->
-                        </tbody>
-                    </table>
+            <h5 class="card-title text-center">数据分析图表</h5>
+            <div class="chart-row">
+                <div class="chart-container">
+                    <canvas id="labelChart"></canvas>
                 </div>
-                <!-- 图表 -->
-                <div class="col-lg-4">
-                    <div id="chart-container">
-                        <canvas id="labelChart"></canvas>
-                    </div>
+                <div class="chart-container">
+                    <canvas id="timeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="numChart"></canvas>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title text-center">数据表格</h5>
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>名称</th>
+                    <th>日期</th>
+                    <th>时间</th>
+                    <th>标签</th>
+                    <th>时间分布</th>
+                    <th>评分</th>
+                </tr>
+                </thead>
+                <tbody id="data-table">
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
-    let chartInstance = null;
+    let labelChartInstance = null;
+    let timeChartInstance = null;
+    let numChartInstance = null;
 
     function parseLabel(labelStr) {
         try {
@@ -113,25 +130,50 @@
         }
     }
 
+    function parseTimeToSeconds(timeStr) {
+        return Number(timeStr);
+    }
+
     async function fetchData() {
         const tableBody = document.getElementById('data-table');
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">加载中...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">加载中...</td></tr>';
 
         try {
             const response = await fetch('/api/data/getAll');
             if (!response.ok) throw new Error('数据获取失败');
             const data = await response.json();
+            console.log('后端返回的数据:', data);
             tableBody.innerHTML = '';
 
             let labelCounts = {"夹杂物": 0, "补丁": 0, "划痕": 0, "其他": 0};
+            let timeCounts = {"0.05-0.07": 0, "0.07-0.09": 0, "0.09-0.11": 0, "0.11-0.13": 0, "0.13-0.15": 0};
+            let numCounts = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0};
 
             data.forEach(item => {
-                let detectedLabels = parseLabel(item.label);
+                const detectedLabels = parseLabel(item.label);
                 detectedLabels.forEach(label => {
                     if (labelCounts.hasOwnProperty(label)) {
                         labelCounts[label]++;
                     }
                 });
+
+                const num = parseInt(item.num);
+                if (numCounts.hasOwnProperty(num)) {
+                    numCounts[num]++;
+                }
+
+                const timeInSeconds = parseTimeToSeconds(item.time);
+                let timeRange = '';
+                if (timeInSeconds >= 0.05 && timeInSeconds <= 0.15) {
+                    if (timeInSeconds <= 0.07) timeRange = "0.05-0.07";
+                    else if (timeInSeconds <= 0.09) timeRange = "0.07-0.09";
+                    else if (timeInSeconds <= 0.11) timeRange = "0.09-0.11";
+                    else if (timeInSeconds <= 0.13) timeRange = "0.11-0.13";
+                    else if (timeInSeconds <= 0.15) timeRange = "0.13-0.15";
+                    timeCounts[timeRange]++;
+                } else {
+                    timeRange = '超出范围';
+                }
 
                 let row = `<tr>
                     <td>${item.figId}</td>
@@ -139,39 +181,142 @@
                     <td>${item.date}</td>
                     <td>${item.time}</td>
                     <td>${detectedLabels.join(', ')}</td>
+                    <td>${timeRange}</td>
                     <td>${item.dice}</td>
                 </tr>`;
                 tableBody.innerHTML += row;
             });
 
-            updateChart(labelCounts);
+            updateLabelChart(labelCounts);
+            updateTimeChart(timeCounts);
+            updateNumChart(numCounts);
+
         } catch (error) {
-            tableBody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">错误: ${error.message}</td></tr>`;
+            console.error(error);
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">数据加载失败</td></tr>';
         }
     }
 
-    function updateChart(labelCounts) {
+    function updateLabelChart(labelCounts) {
+        const labels = Object.keys(labelCounts);
+        const data = Object.values(labelCounts);
         const ctx = document.getElementById('labelChart').getContext('2d');
 
-        if (chartInstance) {
-            chartInstance.destroy();
+        if (labelChartInstance) {
+            labelChartInstance.destroy();
         }
 
-        chartInstance = new Chart(ctx, {
-            type: 'doughnut',
+        labelChartInstance = new Chart(ctx, {
+            type: 'pie',
             data: {
-                labels: Object.keys(labelCounts),
+                labels: labels,
                 datasets: [{
-                    data: Object.values(labelCounts),
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
+                    label: '缺陷标签分布',
+                    data: data,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'bottom'
                     }
+                },
+                layout: {
+                    padding: {
+                        left: 20,
+                        right: 20,
+                        top: 20,
+                        bottom: 20
+                    }
+                },
+                chartArea: {
+                    width: '50%',
+                    height: '50%'
+                }
+            }
+        });
+    }
+
+    function updateTimeChart(timeCounts) {
+        const labels = Object.keys(timeCounts);
+        const data = Object.values(timeCounts);
+        const ctx = document.getElementById('timeChart').getContext('2d');
+
+        if (timeChartInstance) {
+            timeChartInstance.destroy();
+        }
+
+        timeChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '检测时间分布',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    function updateNumChart(numCounts) {
+        const labels = Object.keys(numCounts).map(key => `${key}个缺陷`);
+        const data = Object.values(numCounts);
+        const ctx = document.getElementById('numChart').getContext('2d');
+
+        if (numChartInstance) {
+            numChartInstance.destroy();
+        }
+
+        numChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '缺陷数目分布',
+                    data: data,
+                    backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
                 }
             }
         });
