@@ -9,7 +9,7 @@ import java.util.List;
 
 @Mapper
 public interface ResultMapper {
-    @Select("SELECT * FROM res")
+    @Select("SELECT * FROM res LIMIT 120")
     @Results({
             @Result(column = "fig_id", property = "figId"),
             @Result(column = "res_fig", property = "resFig")
