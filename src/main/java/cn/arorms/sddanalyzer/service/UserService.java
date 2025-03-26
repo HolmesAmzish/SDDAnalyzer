@@ -1,16 +1,9 @@
+// src/main/java/cn/arorms/SDDAnalyzer/service/UserService.java
 package cn.arorms.sddanalyzer.service;
 
-import cn.arorms.sddanalyzer.entity.UserEntity;
-import org.springframework.stereotype.Service;
-import cn.arorms.sddanalyzer.mapper.UserMapper;
+import cn.arorms.sddanalyzer.entity.User;
 
-@Service
-public class UserService {
-    private final UserMapper userMapper;
-    public UserService (UserMapper userMapper) {
-        this.userMapper = userMapper;
-    }
-    public UserEntity getUserByName(String username) {
-        return userMapper.getUserByName(username);
-    }
+public interface UserService {
+    User getUserById(Integer id);
+    User getUserByUsername(String username);
 }

@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>项目主页</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 使用 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             background: #f0f2f5;
@@ -14,7 +14,7 @@
         .hero-section {
             background: url('img/background.png') center/cover no-repeat;
             color: white;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -22,7 +22,6 @@
             position: relative;
             box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.5);
         }
-
         .footer {
             position: absolute;
             bottom: 8px;
@@ -32,48 +31,8 @@
             color: grey;
             font-size: 1rem;
         }
-        .hero-section h1 {
-            font-size: 4rem;
-            font-weight: bold;
-        }
-        .hero-section p {
-            font-size: 1.2rem;
-            margin-top: 10px;
-        }
-        .hero-section .btn {
-            margin-top: 30px;
-            font-size: 1.1rem;
-            padding: 15px 40px;
-            border-radius: 30px;
-        }
-        .login-card {
-            max-width: 400px;
-            margin: auto;
-            padding: 30px;
-            background: white;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        .login-card h2 {
-            font-size: 2rem;
-            margin-bottom: 20px;
-            color: #333;
-        }
-        .form-label {
-            font-weight: bold;
-            color: #555;
-        }
-        .form-control {
-            padding: 15px;
-            font-size: 1rem;
-            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.1);
-        }
-        .btn-primary {
-            background: #0d6efd;
-            padding: 12px;
-            font-size: 1.2rem;
-        }
-        .btn-primary:hover {
-            background: #0b5ed7;
+        #captchaCanvas {
+            cursor: pointer;
         }
     </style>
 </head>
@@ -81,62 +40,132 @@
 
 <section class="hero-section">
     <div>
-        <img class="m-5" alt="SDD-Logo" src="img/sdd-logo-white.png" width=25%>
+        <img class="mx-auto mb-5" alt="SDD-Logo" src="img/sdd-logo-white.png" style="width: 25%;">
 
-        <h1>欢迎来到SDD分析平台</h1>
-        <p>一个智能化的缺陷检测分析系统</p>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal">登录访问</button>
+        <h1 class="text-5xl md:text-6xl font-bold">欢迎来到SDD分析平台</h1>
+        <p class="text-lg md:text-xl mt-2">一个智能化的缺陷检测分析系统</p>
+        <button class="mt-8 text-lg px-10 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition duration-300"
+                onclick="document.getElementById('loginModal').classList.add('block'); document.getElementById('loginModal').classList.remove('hidden');">
+            登录访问
+        </button>
     </div>
-    <p class="footer">&copy; 2025 SDD分析平台. All Rights Reserved.</p>
+    <p class="footer">© 2025 SDD分析平台. All Rights Reserved.</p>
 </section>
 
-
 <!-- Login modal -->
-<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="loginModalLabel">用户登录</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="loginForm">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">用户名</label>
-                        <input type="text" class="form-control" id="username" required style="border-radius: 5px;">
+<div class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h5 class="text-2xl font-semibold text-gray-800" id="loginModalLabel">用户登录</h5>
+            <button type="button" class="text-gray-500 hover:text-gray-700"
+                    onclick="document.getElementById('loginModal').classList.add('hidden'); document.getElementById('loginModal').classList.remove('block');">
+                ✕
+            </button>
+        </div>
+        <div>
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label for="username" class="block text-sm font-bold text-gray-600">用户名</label>
+                    <input type="text" class="mt-1 w-full p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="username" required>
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="block text-sm font-bold text-gray-600">密码</label>
+                    <input type="password" class="mt-1 w-full p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="password" required>
+                </div>
+                <div class="mb-4 flex items-center">
+                    <div class="flex-1">
+                        <label for="captchaInput" class="block text-sm font-bold text-gray-600">验证码</label>
+                        <input type="text" class="mt-1 w-full p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="captchaInput" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">密码</label>
-                        <input type="password" class="form-control" id="password" required style="border-radius: 5px;">
+                    <div class="ml-4">
+                        <canvas id="captchaCanvas" width="100" height="40" class="mt-5 border rounded-md"></canvas>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">登录</button>
-                </form>
-            </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition duration-300 text-lg">登录</button>
+            </form>
         </div>
     </div>
 </div>
 
-
 <script>
+    let captchaCode = '';
+
+    // 生成验证码
+    function generateCaptcha() {
+        const canvas = document.getElementById('captchaCanvas');
+        const ctx = canvas.getContext('2d');
+        const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        captchaCode = '';
+
+        // 清空画布并绘制背景
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 生成随机验证码（4位）
+        for (let i = 0; i < 4; i++) {
+            const char = chars[Math.floor(Math.random() * chars.length)];
+            captchaCode += char;
+            ctx.font = '20px Arial';
+            ctx.fillStyle = `hsl(${Math.random() * 360}, 70%, 50%)`; // 随机颜色
+            ctx.fillText(char, 10 + i * 25, 30 + (Math.random() * 10 - 5)); // 随机偏移
+        }
+
+        // 添加干扰线
+        for (let i = 0; i < 3; i++) {
+            ctx.beginPath();
+            ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+            ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+            ctx.strokeStyle = `hsl(${Math.random() * 360}, 50%, 50%)`;
+            ctx.stroke();
+        }
+    }
+
+    // 点击验证码刷新
+    document.getElementById('captchaCanvas').addEventListener('click', generateCaptcha);
+
+    // 表单提交处理
     document.getElementById('loginForm').addEventListener('submit', async function(event) {
         event.preventDefault();
         const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const captchaInput = document.getElementById('captchaInput').value;
+
+        // 验证验证码
+        if (captchaInput.toLowerCase() !== captchaCode.toLowerCase()) {
+            alert('验证码错误，请重新输入！');
+            generateCaptcha(); // 刷新验证码
+            document.getElementById('captchaInput').value = '';
+            return;
+        }
 
         try {
-            const response = await fetch(`/api/user/getUserByName?username=${username}`);
+            const response = await fetch(`/api/users/username/${username}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
             if (!response.ok) throw new Error('用户验证失败');
             const user = await response.json();
 
-            if (user && user.username === username) {
+            if (user && user.username === username && user.password === password) {
                 alert('登录成功！');
                 window.location.href = "statics.html";
             } else {
-                alert('用户名错误！');
+                alert('用户名或密码错误！');
             }
         } catch (error) {
             alert('登录失败，请检查用户名或网络问题！');
+            console.error('Error:', error);
+        } finally {
+            generateCaptcha(); // 每次提交后刷新验证码
+            document.getElementById('captchaInput').value = '';
         }
     });
+
+    // 页面加载时生成验证码
+    window.onload = generateCaptcha;
 </script>
 
 </body>

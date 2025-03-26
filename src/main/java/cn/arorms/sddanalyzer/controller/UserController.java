@@ -1,22 +1,34 @@
+// src/main/java/cn/arorms/SDDAnalyzer/controller/UserController.java
 package cn.arorms.sddanalyzer.controller;
 
-import cn.arorms.sddanalyzer.entity.UserEntity;
+import cn.arorms.sddanalyzer.entity.User;
 import cn.arorms.sddanalyzer.service.UserService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 public class UserController {
-    private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
+    @Autowired
+    private UserService userService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
+        User user = userService.getUserById(id);
+        if (user != null) {
+            return ResponseEntity.ok(user);
+        }
+        return ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/getUserByName")
-    public UserEntity getUserByName(String username) {
-        return userService.getUserByName(username);
+    @GetMapping("/username/{username}")
+    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
+        User user = userService.getUserByUsername(username);
+        if (user != null) {
+            return ResponseEntity.ok(user);
+        }
+        return ResponseEntity.notFound().build();
     }
 }
